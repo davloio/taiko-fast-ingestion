@@ -64,10 +64,10 @@ impl Database {
         sqlx::query("CREATE INDEX IF NOT EXISTS idx_transactions_block_number ON transactions(block_number)").execute(pool).await?;
         sqlx::query("CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at)").execute(pool).await?;
 
-        // Initialize ingestion state if not exists (start from recent block, not 0)
+        // Initialize ingestion state if not exists (start from block 1)
         sqlx::query(
             "INSERT INTO ingestion_state (id, last_processed_block, mode) 
-             VALUES (1, 3481000, 'reindex') 
+             VALUES (1, 0, 'reindex') 
              ON CONFLICT (id) DO NOTHING"
         ).execute(pool).await?;
 

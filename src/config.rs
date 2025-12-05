@@ -20,10 +20,10 @@ impl Config {
             .unwrap_or_else(|_| "postgresql://postgres:password@localhost:5432/taiko_indexer".to_string());
 
         let rpc_http_url = env::var("RPC_HTTP_URL")
-            .unwrap_or_else(|_| "https://rpc.mainnet.taiko.xyz".to_string());
+            .unwrap_or_else(|_| "https://rpc.ankr.com/taiko".to_string());
 
         let rpc_ws_url = env::var("RPC_WS_URL")
-            .unwrap_or_else(|_| "wss://rpc.mainnet.taiko.xyz".to_string());
+            .unwrap_or_else(|_| "wss://rpc.ankr.com/taiko/ws".to_string());
 
         let batch_size = env::var("BATCH_SIZE")
             .unwrap_or_else(|_| "1000".to_string())

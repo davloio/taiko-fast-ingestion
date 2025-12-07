@@ -246,8 +246,7 @@ impl Database {
         if !all_tx_hashes.is_empty() {
             sqlx::query(
                 "INSERT INTO transactions (hash, block_number, position)
-                 SELECT * FROM UNNEST($1::VARCHAR[], $2::BIGINT[], $3::INTEGER[])
-                 ON CONFLICT (hash) DO NOTHING"
+                 SELECT * FROM UNNEST($1::VARCHAR[], $2::BIGINT[], $3::INTEGER[])"
             )
             .bind(&all_tx_hashes)
             .bind(&all_block_numbers)

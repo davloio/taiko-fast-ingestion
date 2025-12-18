@@ -61,7 +61,7 @@ impl IngestionService {
         let mut current_block = start_block;
         
         while current_block < latest_block {
-            let end_block = (current_block + self.batch_size as u64).min(latest_block);
+            let end_block = (current_block + self.batch_size as u64 - 1).min(latest_block);
             
             info!("Processing blocks {} to {} ({} remaining)", 
                   current_block, end_block, latest_block - current_block);

@@ -67,14 +67,13 @@ impl IngestionService {
                   current_block, end_block, latest_block - current_block);
             
             match self.process_block_range(current_block, end_block).await {
-                Ok(processed) => {
-                    if processed > 0 {
-                        self.db.update_last_processed_block(end_block as i64).await?;
-                        current_block = end_block + 1;
-                    } else {
-                        warn!("No blocks processed in range {} to {}", current_block, end_block);
-                        sleep(Duration::from_secs(1)).await;
-                    }
+                Ok(Some(last_block_processed)) => {
+                    self.db.update_last_processed_block(last_block_processed as i64).await?;
+                    current_block = last_block_processed + 1;
+                }
+                Ok(None) => {
+                    warn!("No blocks processed in range {} to {}", current_block, end_block);
+                    sleep(Duration::from_secs(1)).await;
                 }
                 Err(e) => {
                     error!("Failed to process block range {} to {}: {}", current_block, end_block, e);
@@ -111,9 +110,12 @@ impl IngestionService {
                         info!("New blocks detected: {} to {}", last_processed + 1, latest_block);
                         
                         match self.process_block_range(last_processed + 1, latest_block).await {
-                            Ok(_) => {
-                                last_processed = latest_block;
-                                self.db.update_last_processed_block(latest_block as i64).await?;
+                            Ok(Some(actual_last_block)) => {
+                                last_processed = actual_last_block;
+                                self.db.update_last_processed_block(actual_last_block as i64).await?;
+                            }
+                            Ok(None) => {
+                                // No blocks processed, keep same last_processed
                             }
                             Err(e) => {
                                 error!("Failed to process new blocks: {}", e);
@@ -130,9 +132,10 @@ impl IngestionService {
         }
     }
 
-    async fn process_block_range(&self, from: u64, to: u64) -> Result<usize> {
+    async fn process_block_range(&self, from: u64, to: u64) -> Result<Option<u64>> {
         let blocks = self.blockchain_client.get_block_range(from, to).await?;
         let processed_count = blocks.len();
+        let last_processed_block = blocks.last().map(|b| b.number);
         
         if !blocks.is_empty() {
             // Use batch insert for much better performance
@@ -143,7 +146,7 @@ impl IngestionService {
                   processed_count, total_transactions, from, to);
         }
         
-        Ok(processed_count)
+        Ok(last_processed_block)
     }
 
     async fn process_single_block_sync(&self, block_data: &BlockData) -> Result<()> {

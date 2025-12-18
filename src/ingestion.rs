@@ -58,7 +58,7 @@ impl IngestionService {
             return self.run_live_mode().await;
         }
 
-        let mut current_block = start_block;
+        let mut current_block = start_block + 1;
         
         while current_block < latest_block {
             let end_block = (current_block + self.batch_size as u64 - 1).min(latest_block);
